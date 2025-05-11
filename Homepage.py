@@ -43,14 +43,38 @@ st.title('Welcome to Kris\'s AI Chatbox 😝')
 #         | {st.session_state['PINECONE_API_KEY']}   |
 #     """)
 
+# 显示历史对话记录，需要通过session state 进行存储
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
+
+
+# 根据user input 调用LLM分析
 if chat:
+    # Insert a chatbox input at the bottom
+    prompt = st.chat_input('Type something you want to ask...')
     with st.container():
         st.header('Chat with GPT')
-        prompt = st.text_input('Prompt', value='', max_chars=None, key=None, type='default')
-        asked = st.button('Ask')
-        if asked:
+        # 遍历session state 对话历史
+        for message in st.session_state['messages']:
+            if isinstance(message, HumanMessage):
+                with st.chat_message('user'):
+                    st.markdown(message.content)
+            elif isinstance(message, AIMessage):
+                with st.chat_message('assistant'):
+                    st.markdown(message.content)
+        
+        # asked = st.button('Ask')
+        if prompt:
+            # Insert user input into session state
+            st.session_state['messages'].append(HumanMessage(content=prompt))
+            with st.chat_message('user'):
+                st.markdown(prompt)
             ai_message = chat([HumanMessage(content=prompt)])
-            st.write(ai_message.content)
+            # Insert AI output into session state
+            st.session_state['messages'].append(ai_message)
+            # st.write(ai_message.content)
+            with st.chat_message('assistant'):
+                st.markdown(ai_message.content)
 else:
     with st.container():
         st.warning('Please config your OpenAI API Key before using GPT function!')
