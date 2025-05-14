@@ -4,22 +4,33 @@ from langchain_openai import ChatOpenAI
 
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
+import time
+
+def stream_data(ai_message):
+    for word in ai_message.split(' '):
+        yield word + ' '
+        time.sleep(0.02)
+
+
 # Initialize that ChatOpenAI object
 chat = None
 
 if 'OPENAI_API_KEY' not in st.session_state:
     st.session_state['OPENAI_API_KEY'] = ''
 else:
-    chat = ChatOpenAI(
-        openai_api_key = st.session_state['OPENAI_API_KEY'],
-        model="gpt-4o-mini"
-    )
+    try:
+        chat = ChatOpenAI(
+            openai_api_key = st.session_state['OPENAI_API_KEY'],
+            model="gpt-4o-mini",
+        )
+    except Exception as e:
+        st.error('OpenAI chat instance initialize exception, make sure you have provided valid open api key!')
 
-if 'PINECONE_API_KEY' not in st.session_state:
-    st.session_state['PINECONE_API_KEY'] = ''
+# if 'PINECONE_API_KEY' not in st.session_state:
+#     st.session_state['PINECONE_API_KEY'] = ''
 
-if 'PINECONE_ENVIRONMENT' not in st.session_state:
-    st.session_state['PINECONE_ENVIRONMENT'] = ''
+# if 'PINECONE_ENVIRONMENT' not in st.session_state:
+#     st.session_state['PINECONE_ENVIRONMENT'] = ''
 
 st.set_page_config(page_title='Homepage', layout='wide')
 
@@ -49,7 +60,7 @@ if 'messages' not in st.session_state:
 
 
 # 根据user input 调用LLM分析
-if chat:
+if chat is not None:
     # Insert a chatbox input at the bottom
     prompt = st.chat_input('Type something you want to ask...')
     with st.container():
@@ -69,12 +80,17 @@ if chat:
             st.session_state['messages'].append(HumanMessage(content=prompt))
             with st.chat_message('user'):
                 st.markdown(prompt)
-            ai_message = chat([HumanMessage(content=prompt)])
-            # Insert AI output into session state
-            st.session_state['messages'].append(ai_message)
-            # st.write(ai_message.content)
-            with st.chat_message('assistant'):
-                st.markdown(ai_message.content)
+            
+            with st.spinner('Querying...', show_time=True):
+                # querying resources using LLMs
+                ai_message = chat([HumanMessage(content=prompt)])
+            with st.spinner('Generating...'):
+                # Insert AI output into session state
+                st.session_state['messages'].append(ai_message)
+                # st.write(ai_message.content)
+                with st.chat_message('assistant'):
+                    # st.markdown(ai_message.content)
+                    st.write_stream(stream_data(ai_message=ai_message.content))
 else:
     with st.container():
-        st.warning('Please config your OpenAI API Key before using GPT function!')
+        st.warning('Please config your OpenAI API Key before using GPT function!',icon='⚠')
