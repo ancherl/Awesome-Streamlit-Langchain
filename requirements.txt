@@ -2,5 +2,6 @@ langchain==0.3.25
 langchain_experimental==0.3.4
 langchain_openai==0.3.16
 matplotlib==3.10.3
+openpyxl==3.1.5
 pandas==2.2.3
 streamlit==1.44.1

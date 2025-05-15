@@ -2,6 +2,8 @@ import streamlit as st
 
 import pandas as pd
 
+import openpyxl
+
 # Define custom functions start
 def delete_selected_files():
     st.session_state['UPLOADED_FILES_DATAFRAME_KEY'] += 1
